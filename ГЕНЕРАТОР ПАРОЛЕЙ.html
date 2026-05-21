@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор паролей</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+  body { background: linear-gradient(135deg, #e8eaf6 0%, #fce4ec 50%, #e0f2f1 100%); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; }
+  .wrap { background: #fff; border: 1px solid #e6e6e0; border-radius: 20px; padding: 32px 28px; width: 100%; max-width: 420px; box-shadow: 0 8px 40px #0000000a; }
+
+  h3 { font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #aaa; margin-bottom: 24px; }
+
+  .out-wrap { background: linear-gradient(135deg, #f0f4ff, #fdf0ff); border: 1.5px solid #d4c8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  #out { flex: 1; font-family: monospace; font-size: 17px; letter-spacing: 0.04em; color: #2d1b69; background: none; border: none; outline: none; min-width: 0; }
+  .copy-btn { flex-shrink: 0; padding: 6px 14px; border: 1.5px solid #c4b5f4; border-radius: 7px; cursor: pointer; background: #fff; font-size: 12px; font-weight: 600; color: #6d3be8; transition: all .15s; }
+  .copy-btn:hover { background: #f3eeff; }
+  .copy-btn.ok { background: #f0faf4; border-color: #a8dbb8; color: #2a7a4a; }
+
+  .strength { display: flex; gap: 4px; margin-bottom: 20px; }
+  .strength-seg { flex: 1; height: 4px; border-radius: 2px; background: #eee; transition: background .3s; }
+
+  .row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+  input[type=text], select { padding: 9px 12px; border: 1px solid #e0ddf5; border-radius: 8px; font-size: 14px; outline: none; background: #fafaff; color: #111; transition: border-color .15s; width: 100%; }
+  input[type=text]:focus, select:focus { border-color: #a78bfa; background: #fff; }
+  select { width: auto; }
+
+  .len-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .len-row label { font-size: 13px; color: #888; white-space: nowrap; }
+  input[type=range] { flex: 1; accent-color: #7c3aed; }
+  .len-val { font-size: 14px; font-weight: 700; color: #7c3aed; width: 26px; text-align: right; }
+
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #b0a0d0; margin: 0 0 8px; }
+
+  .cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 20px; }
+  .toggle { padding: 8px 4px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 12px; font-weight: 500; border: 1px solid #e8e4f4; color: #a090c0; user-select: none; transition: all .15s; background: #fafaff; }
+  .toggle:hover { color: #6d3be8; border-color: #c4b5f4; }
+  .toggle.on { border-color: #7c3aed; color: #fff; background: #7c3aed; font-weight: 600; }
+
+  .ex-box { border: 1px solid #e8e4f4; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  .ex-tabs { display: flex; border-bottom: 1px solid #ede8f8; overflow-x: auto; background: #f8f6ff; }
+  .ex-tabs b { font-size: 10px; color: #c0b0d8; padding: 9px 10px; font-weight: 700; letter-spacing: 0.07em; white-space: nowrap; align-self: center; text-transform: uppercase; }
+  .ex-tabs span { font-size: 12px; font-weight: 500; color: #b0a0c8; cursor: pointer; padding: 9px 10px; white-space: nowrap; transition: color .15s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .ex-tabs span:hover { color: #6d3be8; }
+  .ex-tabs span.on { color: #7c3aed; border-bottom-color: #7c3aed; font-weight: 600; }
+  .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(28px, 1fr)); gap: 4px; max-height: 84px; overflow-y: auto; padding: 10px 12px; background: #fff; }
+  .ch { padding: 4px 2px; border: 1px solid #ede8f8; background: #fff; cursor: pointer; border-radius: 5px; font-family: monospace; font-size: 13px; text-align: center; color: #444; transition: all .1s; }
+  .ch:hover { border-color: #a78bfa; background: #f5f0ff; color: #6d3be8; }
+  .ch.off { background: #fff5f5; color: #e0b0b0; text-decoration: line-through; border-color: #f0d0d0; }
+
+  .gen-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.03em; transition: opacity .15s, transform .1s; }
+  .gen-btn:hover { opacity: 0.9; }
+  .gen-btn:active { transform: scale(0.99); }
+
+  .hist-wrap { margin-top: 20px; }
+  .hist-label { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #c8b8e8; margin-bottom: 10px; }
+  .hist-item { font-family: monospace; font-size: 13px; color: #888; padding: 7px 0; border-bottom: 1px solid #f4f2fc; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: color .1s; }
+  .hist-item:hover { color: #7c3aed; }
+  .hist-item::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #c4b5f4; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>Генератор паролей</h3>
+  <p class="subtitle">Создайте надёжный пароль за секунду</p>
+
+  <div class="out-wrap">
+    <input type="text" id="out" readonly placeholder="Нажмите «Сгенерировать»">
+    <button class="copy-btn" id="copyBtn" onclick="copy()">Копировать</button>
+  </div>
+  <div class="strength">
+    <div class="strength-seg" id="s0"></div>
+    <div class="strength-seg" id="s1"></div>
+    <div class="strength-seg" id="s2"></div>
+    <div class="strength-seg" id="s3"></div>
+  </div>
+
+  <div class="row">
+    <input type="text" id="word" placeholder="Своё слово (необязательно)" style="flex:1">
+    <select id="pos" style="width:auto;flex-shrink:0">
+      <option value="r">случайно</option>
+      <option value="0">в начало</option>
+      <option value="1">в конец</option>
+    </select>
+  </div>
+
+  <div class="len-row">
+    <label>Длина</label>
+    <input type="range" id="len" min="4" max="64" value="16" oninput="lenVal.innerText=this.value">
+    <span class="len-val" id="lenVal">16</span>
+  </div>
+
+  <div class="section-label">Символы</div>
+  <div class="cats" id="cats"></div>
+
+  <div class="section-label">Исключить</div>
+  <div class="ex-box">
+    <div class="ex-tabs" id="exTabs"></div>
+    <div class="char-grid" id="chars"></div>
+  </div>
+
+  <button class="gen-btn" onclick="gen()">Сгенерировать</button>
+  <div id="hist"></div>
+</div>
+
+<script>
+const SETS = {
+  'A-Z': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  'a-z': 'abcdefghijklmnopqrstuvwxyz',
+  'А-Я': 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+  'а-я': 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя',
+  '0-9': '0123456789',
+  '!@#': '!@#$%^&*()_+-=[]{}|;:",.<>?/'
+};
+
+let active = new Set(['A-Z','a-z','0-9']);
+let excl = new Set();
+let curTab = 'A-Z';
+let hist = [];
+
+function render() {
+  // категории
+  document.getElementById('cats').innerHTML = Object.keys(SETS).map(k =>
+    `<div class="toggle ${active.has(k)?'on':''}" onclick="toggle('${k}')">${k}</div>`
+  ).join('');
+
+  // вкладки исключений
+  document.getElementById('exTabs').innerHTML =
+    '<b style="color:#999">ИСКЛЮЧИТЬ:</b>' +
+    Object.keys(SETS).map(k =>
+      `<span class="${curTab===k?'on':''}" onclick="curTab='${k}';render()">${k}</span>`
+    ).join('');
+
+  // символы текущей вкладки
+  document.getElementById('chars').innerHTML = active.has(curTab)
+    ? [...SETS[curTab]].map(c =>
+        `<div class="ch ${excl.has(c)?'off':''}" onclick="toggleChar('${c}')">${c}</div>`
+      ).join('')
+    : '<span style="color:#bbb;font-size:12px">Категория не выбрана</span>';
+}
+
+function toggle(k) { active.has(k) ? active.delete(k) : active.add(k); render(); }
+
+function toggleChar(c) { excl.has(c) ? excl.delete(c) : excl.add(c); render(); }
+
+function gen() {
+  const pool = [...active].flatMap(k => [...SETS[k]]).filter(c => !excl.has(c));
+  if (!pool.length) return alert('Нет доступных символов!');
+
+  const len = +document.getElementById('len').value;
+  const word = document.getElementById('word').value;
+  const pos = document.getElementById('pos').value;
+  const rand = n => new Array(n).fill(0).map((_, i) => {
+    const buf = new Uint32Array(1); crypto.getRandomValues(buf);
+    return pool[buf[0] % pool.length];
+  });
+
+  let parts = rand(Math.max(0, len - word.length));
+  if (word) {
+    if (pos === '0') parts.unshift(word);
+    else if (pos === '1') parts.push(word);
+    else { const i = Math.floor(Math.random() * (parts.length + 1)); parts.splice(i, 0, word); }
+  }
+
+  const pw = parts.join('').slice(0, Math.max(len, word.length));
+  document.getElementById('out').value = pw;
+  updateStrength(pw);
+
+  if (pw && hist[0] !== pw) {
+    hist = [pw, ...hist].slice(0, 5);
+    document.getElementById('hist').innerHTML = '<div class="hist-wrap"><div class="hist-label">История</div>' + hist.map(h => `<div class="hist-item" onclick="document.getElementById('out').value='${h}'">${h}</div>`).join('') + '</div>';
+  }
+}
+
+function updateStrength(pw) {
+  const colors = ['#e66', '#f0a030', '#5aaa70', '#2a7a4a'];
+  const score = !pw ? -1 : pw.length < 8 ? 0 : pw.length < 12 ? 1 : pw.length < 20 ? 2 : 3;
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('s' + i).style.background = i <= score ? colors[score] : '#eee';
+  }
+}
+
+function copy() {
+  const val = document.getElementById('out').value;
+  if (!val) return;
+  navigator.clipboard.writeText(val);
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = 'Скопировано!';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'Копировать'; btn.classList.remove('ok'); }, 2000);
+}
+
+render();
+</script>
+</div>
+</body>
+</html>
